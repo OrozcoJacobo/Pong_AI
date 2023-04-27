@@ -94,8 +94,47 @@ def handle_paddle_movement(keys, left_paddle, right_paddle):
         right_paddle.move(up = False)
 
 
-def handle_collision():
-    pass
+#Function to handle collisions
+def handle_collision(ball, left_paddle, right_paddle):
+    #if the ball is going to hit the bottom of the cieling 
+    if ball.y + ball.radius >= HEIGHT: #ball.y is the center of the ball, use paint to imagine calculating the distance between the center of the pallet to the center of the ball to determine rebound
+        ball.y_velocity *= -1 
+    elif ball.y - ball.radius <= 0:
+        ball.y_velocity *= -1
+    
+    #Check if we are hitting the left paddle or the right paddle
+    #Left paddle
+    if ball.x_velocity < 0:
+        if ball.y >= left_paddle.y and ball.y <= left_paddle.y + left_paddle.height:
+            if ball.x - ball.radius <= left_paddle.x + left_paddle.width:
+                ball.x_velocity *= -1 
+
+                #Now to deal with the angle for rebound
+                #Calculate the displacement between the ball and the center of the paddle and then determine the angle of that to bounce it off  
+                middle_y = left_paddle.y + left_paddle.height / 2
+                difference_in_y = middle_y - ball.y
+                #Determine what the velocity should be 
+                reduction_factor = (left_paddle.height / 2) / ball.MAX_VELOCITY
+                y_velocity = difference_in_y / reduction_factor
+                ball.y_velocity = -1 * y_velocity
+
+    else: 
+        #right paddle
+        if ball.y >= right_paddle.y and ball.y <= right_paddle.y + right_paddle.height:
+            if ball.x + ball.radius >= right_paddle.x:
+                ball.x_velocity *= -1
+
+                
+                #Now to deal with the angle for rebound
+                #Calculate the displacement between the ball and the center of the paddle and then determine the angle of that to bounce it off  
+                middle_y = right_paddle.y + right_paddle.height / 2
+                difference_in_y = middle_y - ball.y
+                #Determine what the velocity should be 
+                reduction_factor = (right_paddle.height / 2) / ball.MAX_VELOCITY
+                y_velocity = difference_in_y / reduction_factor
+                ball.y_velocity = -1 * y_velocity
+
+        
 
 #Implementation of the main loop of my program -- Will display the window and then draw something onto it 
 def main():
@@ -129,7 +168,7 @@ def main():
         keys = pg.key.get_pressed()
         handle_paddle_movement(keys, left_paddle, right_paddle)
         ball.move()
-    
+        handle_collision(ball, left_paddle, right_paddle)
     #Quit pygame and close the program
     pg.quit()
 
