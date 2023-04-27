@@ -19,6 +19,8 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 PADDLE_WIDTH, PADDLE_HEIGHT = 20, 100
 BALL_RADIUS = 7
+SCORE_FONT = pg.font.SysFont('comicsans', 50)
+WINNING_SCORE = 10
 #Title of the window
 pg.display.set_caption("Pong")
 
@@ -28,8 +30,8 @@ class Paddle:
     COLOR = WHITE
     VELOCITY = 4
     def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
+        self.x = self.original_x = x
+        self.y = self.original_y = y
         self.width = width
         self.height = height
     
@@ -41,15 +43,18 @@ class Paddle:
             self.y -= self.VELOCITY
         else:
             self.y += self.VELOCITY
-        
+
+    def reset(self):
+        self.x = self.original_x     
+        self.y = self.original_y   
 
 
 class Ball:
     MAX_VELOCITY = 5
     COLOR = WHITE
     def __init__(self, x, y, radius):
-        self.x = x
-        self.y = y
+        self.x = self.original_x = x
+        self.y = self.original_y = y
         self.radius = radius
         self.x_velocity = self.MAX_VELOCITY
         self.y_velocity = 0
@@ -61,10 +66,24 @@ class Ball:
         self.x += self.x_velocity
         self.y += self.y_velocity
 
+    def reset(self):
+        self.x = self.original_x
+        self.y = self.original_y
+        self.y_velocity = 0
+        self.x_velocity *= -1
+
 
 #Function that manages draWINDOWg, it takes one variables(window its going to draw on)
-def draw(window, paddles, ball):
+def draw(window, paddles, ball, left_score, right_score):
     window.fill(BLACK)
+
+    left_score_text = SCORE_FONT.render(f"{left_score}", 1, WHITE)
+    right_score_text = SCORE_FONT.render(f"{right_score}", 1, WHITE)
+
+    window.blit(left_score_text, (WIDTH//4 - left_score_text.get_width()//2, 20))
+    window.blit(right_score_text, (WIDTH * (3/4) - right_score_text.get_width()//2, 20))
+
+   
 
     for paddle in paddles: 
         paddle.draw(window)
@@ -153,10 +172,14 @@ def main():
     right_paddle = Paddle(WIDTH - 10 - PADDLE_WIDTH, HEIGHT//2 - PADDLE_HEIGHT//2, PADDLE_WIDTH, PADDLE_HEIGHT)
     #Creating the ball
     ball = Ball(WIDTH//2, HEIGHT//2, BALL_RADIUS)
+    #Variable for score system
+    left_score = 0
+    right_score = 0
+
 
     while run:
         clock.tick(FPS)
-        draw(WINDOW, [left_paddle, right_paddle], ball)
+        draw(WINDOW, [left_paddle, right_paddle], ball, left_score, right_score)
         #This for loop will get all of the events--ie like clicking mouse, clicking keyboard, closing window
         for event in pg.event.get():
             #The fist event to check is if the player is actually closing the window
@@ -169,6 +192,34 @@ def main():
         handle_paddle_movement(keys, left_paddle, right_paddle)
         ball.move()
         handle_collision(ball, left_paddle, right_paddle)
+
+        if ball.x < 0: 
+            right_score += 1
+            ball.reset()
+        elif ball.x > WIDTH:
+            left_score += 1
+            ball.reset()
+
+        won = False
+
+        if left_score >= WINNING_SCORE:
+            won = True
+            win_text = "Left Player Won!"
+        elif right_score >= WINNING_SCORE:
+            won = True
+            win_test = "Right Player Won!"
+
+        if won:
+            text = SCORE_FONT.render(win_text, WHITE)
+            WINDOW.blit(text, (WIDTH//2 - text.get_widht()//2, HEIGHT//2 - text.get_height()//2))
+            pg.display.update()
+            pg.time.delay(5000)
+            ball.reset()
+            left_paddle.reset()
+            right_paddle.reset()
+            left_score = 0
+            right_score = 0
+
     #Quit pygame and close the program
     pg.quit()
 
